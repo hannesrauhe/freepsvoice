@@ -1,0 +1,10 @@
+Categories:
+  - Online
+License: MIT
+AuthorName: Hannes Rauhe
+SourceCode: https://github.com/hannesrauhe/freepsvoice
+Summary: Voice control for freeps smart home (wall panel)
+Description: |
+  Talk to your freeps smart home. Record a command, it is transcribed
+  and interpreted by Mistral AI, and executed on your freeps server.
+  This is the wall panel flavour with kiosk mode (device owner).

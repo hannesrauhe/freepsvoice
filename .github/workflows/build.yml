@@ -1,5 +1,6 @@
 # Debug APKs (wall + phone) on push/PR (artifacts); SIGNED release APKs on v* tags.
-# Tag builds need repo secrets: KEYSTORE_BASE64 and KEYSTORE_PASSWORD.
+# Tag builds need repo secrets: KEYSTORE_BASE64, KEYSTORE_PASSWORD,
+# FDROID_REPO_KEY_BASE64, FDROID_REPO_PASSWORD.
 name: Build
 
 on:
@@ -62,8 +63,37 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           V=${GITHUB_REF#refs/tags/}
-          gh release create "$V" \
-            app/build/outputs/apk/wall/release/app-wall-release.apk#freepsvoice-wall-$V.apk \
-            app/build/outputs/apk/phone/release/app-phone-release.apk#freepsvoice-phone-$V.apk \
+          mkdir -p dist
+          cp app/build/outputs/apk/wall/release/app-wall-release.apk dist/freepsvoice-wall-$V.apk
+          cp app/build/outputs/apk/phone/release/app-phone-release.apk dist/freepsvoice-phone-$V.apk
+          gh release create "$V" dist/freepsvoice-wall-$V.apk dist/freepsvoice-phone-$V.apk \
             --title "$V" \
             --notes "Signed release. Wall panel: adb install freepsvoice-wall-$V.apk · Phone: adb install freepsvoice-phone-$V.apk"
+
+      - name: Publish F-Droid repo (tag)
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        env:
+          FDROID_REPO_KEY_BASE64: ${{ secrets.FDROID_REPO_KEY_BASE64 }}
+          FDROID_REPO_PASSWORD: ${{ secrets.FDROID_REPO_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=${GITHUB_REF#refs/tags/}
+          python3 -m pip install --quiet --break-system-packages 'git+https://gitlab.com/fdroid/fdroidserver.git@master'
+          echo "$FDROID_REPO_KEY_BASE64" | base64 -d > keystore.p12
+          sed "s|@PASS@|$FDROID_REPO_PASSWORD|" fdroid/config.yml > config.yml
+          cp -r fdroid/metadata .
+          mkdir -p repo
+          cp dist/freepsvoice-phone-$V.apk dist/freepsvoice-wall-$V.apk repo/
+          if git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
+            git clone -q --depth 1 -b gh-pages "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ghpages
+            cp ghpages/fdroid/repo/*.apk repo/ 2>/dev/null || true
+          else
+            mkdir -p ghpages && git -C ghpages init -q -b gh-pages
+          fi
+          fdroid update
+          rm -rf ghpages/fdroid/repo && mkdir -p ghpages/fdroid
+          mv repo ghpages/fdroid/repo
+          git -C ghpages add -A
+          git -C ghpages -c user.name=freepsvoice-ci -c user.email=ci@users.noreply.github.com \
+            commit -q -m "fdroid repo $V" || echo "no changes to publish"
+          git -C ghpages push -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages

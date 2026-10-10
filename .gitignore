@@ -16,3 +16,5 @@ keystore.properties
 *.log
 .vscode/
 .DS_Store
+*.p12
+fdroid-repo.password

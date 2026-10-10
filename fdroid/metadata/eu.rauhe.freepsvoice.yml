@@ -1,0 +1,10 @@
+Categories:
+  - Online
+License: MIT
+AuthorName: Hannes Rauhe
+SourceCode: https://github.com/hannesrauhe/freepsvoice
+Summary: Voice control for freeps smart home
+Description: |
+  Talk to your freeps smart home. Record a command, it is transcribed
+  and interpreted by Mistral AI, and executed on your freeps server.
+  This is the regular phone flavour of the app.

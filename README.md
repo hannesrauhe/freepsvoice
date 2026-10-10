@@ -25,8 +25,7 @@ client's QR scanner, or add the URL by hand):
 
 ![F-Droid repo](doc/fdroid-repo-qr.png)
 
-The index is served from GitHub Pages and still needs a publishing pipeline;
-until that ships the URL 404s and the QR adds an empty repo.
+The index is built and published to GitHub Pages by CI on every `v*` tag.
 
 ```
 mic ──WAV──▶ Mistral Voxtral (STT) ──text──▶ Mistral LLM (pick flow)
@@ -193,11 +192,18 @@ as release assets. Set these once under Settings → Secrets and variables → A
 |---|---|
 | `KEYSTORE_BASE64` | `base64 -w0 freepsvoice-release.jks` |
 | `KEYSTORE_PASSWORD` | keystore password |
+| `FDROID_REPO_KEY_BASE64` | `base64 -w0 fdroid-repo.p12` |
+| `FDROID_REPO_PASSWORD` | repo keystore password |
 
 The alias and key password are deliberately not secrets: the keystore is PKCS12,
 which holds one entry and has no separate key password, so `app/build.gradle.kts`
 defaults them to `freepsvoice` and to the store password. Add `keyAlias` /
 `keyPassword` lines to `keystore.properties` only if a future keystore differs.
+
+`fdroid-repo.p12` + `fdroid-repo.password` (gitignored) sign the F-Droid **index**
+— separate from the app keystore. Losing them means every F-Droid client has to
+re-add the repo. Tag builds also push the built index to the `gh-pages` branch
+(GitHub Pages → Settings → Pages → source: `gh-pages` branch, `/` must be enabled).
 
 A release-signed APK cannot be installed over a debug-signed one (signature
 mismatch) — `adb uninstall` first.

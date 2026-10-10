@@ -1,0 +1,6 @@
+repo_url: https://hannesrauhe.github.io/freepsvoice/fdroid/repo
+
+keystore: keystore.p12
+repo_keyalias: fdroidrepo
+keystorepass: "@PASS@"
+keypass: "@PASS@"

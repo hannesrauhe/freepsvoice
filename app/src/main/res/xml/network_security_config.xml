@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- freeps is plain HTTP on the LAN and its host is user-configurable, so
+     cleartext is allowed broadly for the POC. Narrow this later (README note 3). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

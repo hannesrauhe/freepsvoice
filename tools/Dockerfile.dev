@@ -1,0 +1,37 @@
+FROM gradle:8.11.1-jdk17
+
+ARG UID=1000
+ARG GID=1000
+
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+USER root
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl unzip ca-certificates git \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    mkdir -p "$ANDROID_HOME/cmdline-tools"; \
+    curl -fsSL -o /tmp/ct.zip \
+      https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip; \
+    unzip -q /tmp/ct.zip -d /tmp/ct; \
+    mv /tmp/ct/cmdline-tools "$ANDROID_HOME/cmdline-tools/latest"; \
+    rm -rf /tmp/ct /tmp/ct.zip
+
+RUN set -eux; \
+    yes | sdkmanager --licenses >/dev/null; \
+    sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" >/dev/null
+
+# Match the host user so build outputs are owned by us, not root.
+RUN set -eux; \
+    if [ "$(id -u gradle)" != "$UID" ]; then usermod -u "$UID" gradle; fi; \
+    if [ "$(id -g gradle)" != "$GID" ]; then groupmod -g "$GID" gradle; fi; \
+    mkdir -p /src /home/gradle/.gradle /home/gradle/.android; \
+    chown -R "$UID:$GID" /home/gradle /src "$ANDROID_HOME"
+
+WORKDIR /src
+USER gradle
+CMD ["bash"]

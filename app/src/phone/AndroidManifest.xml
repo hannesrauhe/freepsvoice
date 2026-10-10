@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phone flavor: strips everything the wall kiosk needs from the base manifest. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" tools:node="remove" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:node="remove" />
+
+    <application>
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="unspecified"
+            tools:replace="android:screenOrientation" />
+
+        <receiver android:name=".KioskAdmin" tools:node="remove" />
+        <receiver android:name=".KioskReceiver" tools:node="remove" />
+        <receiver android:name=".AlertReceiver" tools:node="remove" />
+    </application>
+</manifest>

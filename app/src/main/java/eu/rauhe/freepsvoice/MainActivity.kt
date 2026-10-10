@@ -52,11 +52,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
-        // Wall panel: the screen must not sleep while the app is open.
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        // On wake: screen on and app drawn over the keyguard, no swipe screen visible.
-        setShowWhenLocked(true)
-        setTurnScreenOn(true)
+        if (wallMode) {
+            // Wall panel: the screen must not sleep while the app is open.
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            // On wake: screen on and app drawn over the keyguard, no swipe screen visible.
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
         val s = Settings(this)
         if (s.kioskEnabled) {
             Kiosk.enable(this)
@@ -167,7 +169,7 @@ fun App() {
                             }
                         }
                     }
-                    if (!kioskOn && Kiosk.isOwner(context)) {
+                    if (wallMode && !kioskOn && Kiosk.isOwner(context)) {
                         TextButton(onClick = ::enableKiosk) { Text("Wandbetrieb an") }
                     }
                     IconButton(onClick = { showSettings = true }) {

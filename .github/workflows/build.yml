@@ -1,5 +1,5 @@
-# Debug APKs (wall + phone) on every push/PR (artifacts); release assets on v* tags.
-# Release is UNSIGNED for now — sideload only (README note 7).
+# Debug APKs (wall + phone) on push/PR (artifacts); SIGNED release APKs on v* tags.
+# Tag builds need repo secrets: KEYSTORE_BASE64 and KEYSTORE_PASSWORD.
 name: Build
 
 on:
@@ -28,6 +28,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Assemble debug APKs (wall + phone)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         run: ./gradlew --no-daemon assembleWallDebug assemblePhoneDebug
 
       - name: Upload artifacts (push/PR)
@@ -39,6 +40,22 @@ jobs:
             app/build/outputs/apk/wall/debug/app-wall-debug.apk
             app/build/outputs/apk/phone/debug/app-phone-debug.apk
 
+      - name: Restore keystore (tag)
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > freepsvoice-release.jks
+          {
+            echo "storeFile=freepsvoice-release.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+          } > keystore.properties
+
+      - name: Assemble signed release APKs (tag)
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: ./gradlew --no-daemon assembleWallRelease assemblePhoneRelease
+
       - name: Publish release assets (tag)
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         env:
@@ -46,7 +63,7 @@ jobs:
         run: |
           V=${GITHUB_REF#refs/tags/}
           gh release create "$V" \
-            app/build/outputs/apk/wall/debug/app-wall-debug.apk#freepsvoice-wall-$V.apk \
-            app/build/outputs/apk/phone/debug/app-phone-debug.apk#freepsvoice-phone-$V.apk \
+            app/build/outputs/apk/wall/release/app-wall-release.apk#freepsvoice-wall-$V.apk \
+            app/build/outputs/apk/phone/release/app-phone-release.apk#freepsvoice-phone-$V.apk \
             --title "$V" \
-            --notes "Debug builds. Wall panel: adb install freepsvoice-wall-$V.apk · Phone: adb install freepsvoice-phone-$V.apk"
+            --notes "Signed release. Wall panel: adb install freepsvoice-wall-$V.apk · Phone: adb install freepsvoice-phone-$V.apk"

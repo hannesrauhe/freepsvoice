@@ -48,16 +48,20 @@ fun SettingsScreen(vm: AppViewModel, onDismiss: () -> Unit, onEditSensors: () ->
         s.mistralBase = mistralBase
         s.llmBase = llmBase
         s.dryRun = dry
-        s.kioskEnabled = kiosk
-        s.kioskOnTime = kioskOn
-        s.kioskOffTime = kioskOff
-        s.kioskProximity = proximity
+        if (wallMode) {
+            s.kioskEnabled = kiosk
+            s.kioskOnTime = kioskOn
+            s.kioskOffTime = kioskOff
+            s.kioskProximity = proximity
+        }
         vm.settingsSaved()
-        Kiosk.applySchedule(context)
-        (context as? MainActivity)?.updateProximity()
-        val activity = context as? Activity
-        if (activity != null) {
-            if (kiosk) Kiosk.enable(activity) else Kiosk.disable(activity)
+        if (wallMode) {
+            Kiosk.applySchedule(context)
+            (context as? MainActivity)?.updateProximity()
+            val activity = context as? Activity
+            if (activity != null) {
+                if (kiosk) Kiosk.enable(activity) else Kiosk.disable(activity)
+            }
         }
         onDismiss()
     }
@@ -148,43 +152,45 @@ fun SettingsScreen(vm: AppViewModel, onDismiss: () -> Unit, onEditSensors: () ->
                 TextButton(onClick = onEditSensors) { Text("Wählen") }
             }
 
-            HorizontalDivider()
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Wandbetrieb", style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        if (isOwner) "App bleibt vorn; Bildschirm nach Zeitplan."
-                        else "Geräte-Eigentümer fehlt — siehe README (adb dpm set-owner).",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                Switch(checked = kiosk, onCheckedChange = { kiosk = it })
-            }
-            if (kiosk) {
-                if (keyguardSecure) {
-                    Text(
-                        "Bildschirmsperre auf \"Ohne\" stellen, sonst erscheint beim Aufwachen der Swipe-Bildschirm.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    TimeField("An um", kioskOn) { kioskOn = it }
-                    TimeField("Aus um", kioskOff) { kioskOff = it }
-                }
+            if (wallMode) {
+                HorizontalDivider()
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        "Wach, wenn Hand vor dem Sensor (kein Annähern aus Distanz)",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Switch(checked = proximity, onCheckedChange = { proximity = it })
+                    Column(Modifier.weight(1f)) {
+                        Text("Wandbetrieb", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            if (isOwner) "App bleibt vorn; Bildschirm nach Zeitplan."
+                            else "Geräte-Eigentümer fehlt — siehe README (adb dpm set-owner).",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    Switch(checked = kiosk, onCheckedChange = { kiosk = it })
+                }
+                if (kiosk) {
+                    if (keyguardSecure) {
+                        Text(
+                            "Bildschirmsperre auf \"Ohne\" stellen, sonst erscheint beim Aufwachen der Swipe-Bildschirm.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TimeField("An um", kioskOn) { kioskOn = it }
+                        TimeField("Aus um", kioskOff) { kioskOff = it }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            "Wach, wenn Hand vor dem Sensor (kein Annähern aus Distanz)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Switch(checked = proximity, onCheckedChange = { proximity = it })
+                    }
                 }
             }
 

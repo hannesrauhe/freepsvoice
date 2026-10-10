@@ -14,6 +14,20 @@ fires it and shows the reply on screen.
 Both share one code base; `wall` only adds an id suffix, so the two install side by
 side. The device-owner commands below always use the **suffixed** id.
 
+## Install
+
+Signed release APKs are attached to each [GitHub release](../../releases).
+
+For update notifications, add this F-Droid repository (scan with the F-Droid
+client's QR scanner, or add the URL by hand):
+
+`https://hannesrauhe.github.io/freepsvoice/fdroid/repo`
+
+![F-Droid repo](doc/fdroid-repo-qr.png)
+
+The index is served from GitHub Pages and still needs a publishing pipeline;
+until that ships the URL 404s and the QR adds an empty repo.
+
 ```
 mic ──WAV──▶ Mistral Voxtral (STT) ──text──▶ Mistral LLM (pick flow)
                                                     │
@@ -169,7 +183,24 @@ Einstellungen → Speichern to leave lock task.
 `./tools/make-keystore.sh` once → `freepsvoice-release.jks` +
 `keystore.properties` (both gitignored — **back them up**; without the keystore
 the installed app can only be replaced by uninstalling). `assembleRelease` then
-signs automatically. Not needed for debug sideloads.
+signs locally. Not needed for debug sideloads.
+
+Tag builds are signed in CI: push a `v*` tag and the workflow restores the
+keystore from repo **secrets** and publishes signed `freepsvoice-{wall,phone}-<tag>.apk`
+as release assets. Set these once under Settings → Secrets and variables → Actions:
+
+| Secret | Value |
+|---|---|
+| `KEYSTORE_BASE64` | `base64 -w0 freepsvoice-release.jks` |
+| `KEYSTORE_PASSWORD` | keystore password |
+
+The alias and key password are deliberately not secrets: the keystore is PKCS12,
+which holds one entry and has no separate key password, so `app/build.gradle.kts`
+defaults them to `freepsvoice` and to the store password. Add `keyAlias` /
+`keyPassword` lines to `keystore.properties` only if a future keystore differs.
+
+A release-signed APK cannot be installed over a debug-signed one (signature
+mismatch) — `adb uninstall` first.
 
 ## Open notes / TODO
 

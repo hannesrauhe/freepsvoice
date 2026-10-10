@@ -24,14 +24,21 @@ android {
         versionName = "0.1.0"
     }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 
     flavorDimensions += "device"
     productFlavors {
-        create("phone") { dimension = "device" }
+        create("phone") {
+            dimension = "device"
+            buildConfigField("boolean", "WALL_MODE", "false")
+        }
         create("wall") {
             dimension = "device"
             applicationIdSuffix = ".wall"
+            buildConfigField("boolean", "WALL_MODE", "true")
         }
     }
 
@@ -46,8 +53,10 @@ android {
             create("release") {
                 storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
                 storePassword = keystoreProps.getProperty("storePassword")
-                keyAlias = keystoreProps.getProperty("keyAlias")
+                // PKCS12 has one entry and no separate key password, so both have defaults.
+                keyAlias = keystoreProps.getProperty("keyAlias") ?: "freepsvoice"
                 keyPassword = keystoreProps.getProperty("keyPassword")
+                    ?: keystoreProps.getProperty("storePassword")
             }
         }
     }

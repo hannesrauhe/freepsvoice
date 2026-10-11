@@ -1,5 +1,8 @@
 repo_url: https://hannesrauhe.github.io/freepsvoice/fdroid/repo
 
+repo_name: freepsvoice
+repo_description: Voice control for freeps smart home — phone and wall panel builds.
+
 keystore: keystore.p12
 repo_keyalias: fdroidrepo
 keystorepass: "@PASS@"

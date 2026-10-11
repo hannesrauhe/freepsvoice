@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AppViewModel(app: android.app.Application) : AndroidViewModel(app) {
     val settings = Settings(app)
@@ -30,7 +31,8 @@ class AppViewModel(app: android.app.Application) : AndroidViewModel(app) {
         private set
     var modelsError by mutableStateOf("")
         private set
-    var testResult by mutableStateOf("")
+    var freepsStatus by mutableStateOf("")
+    var mistralStatus by mutableStateOf("")
         private set
 
     init {
@@ -164,18 +166,40 @@ class AppViewModel(app: android.app.Application) : AndroidViewModel(app) {
 
     /** Checks the values currently in the settings fields, not the saved ones. */
     fun testConnection(key: String, freepsUrl: String, mistralBase: String, dry: Boolean) {
-        testResult = "Prüfe…"
+        freepsStatus = "Prüfe…"
+        mistralStatus = if (dry) "übersprungen (Trockentest)" else "Prüfe…"
         viewModelScope.launch(Dispatchers.IO) {
             val flows = runCatching { Freeps(freepsUrl.trim().trimEnd('/')).listFlows().size }
-                .fold({ "freeps: ${it} Flows" }, { "freeps: ${it.message}" })
+                .fold({ "OK: ${it} Flows" }, { it.message ?: "Fehler" })
             val mistral = when {
-                dry -> "Mistral: übersprungen (Trockentest)"
-                key.isBlank() -> "Mistral: kein Key"
+                dry -> "übersprungen (Trockentest)"
+                key.isBlank() -> "kein Key"
                 else -> runCatching {
                     Mistral(key.trim(), mistralBase.trim().trimEnd('/')).listModels().size
-                }.fold({ "Mistral: ${it} Modelle" }, { "Mistral: ${it.message}" })
+                }.fold({ "OK: ${it} Modelle" }, { it.message ?: "Fehler" })
             }
-            testResult = "$flows · $mistral"
+            withContext(Dispatchers.Main) {
+                freepsStatus = flows
+                mistralStatus = mistral
+            }
+        }
+    }
+
+    /** Pulls the Mistral key from the freeps server, fills the field and tests both connections. */
+    fun fetchKey(freepsUrl: String, mistralBase: String, dry: Boolean, onKey: (String) -> Unit) {
+        freepsStatus = "Hole Key…"
+        viewModelScope.launch(Dispatchers.IO) {
+            val res = runCatching { Freeps(freepsUrl.trim().trimEnd('/')).getMistralKey() }
+                .mapCatching { it.ifBlank { error("freeps hat keinen Mistral-Key") } }
+            withContext(Dispatchers.Main) {
+                res.fold(
+                    onSuccess = {
+                        onKey(it)
+                        testConnection(it, freepsUrl, mistralBase, dry)
+                    },
+                    onFailure = { freepsStatus = "freeps: ${it.message ?: "Fehler"}" },
+                )
+            }
         }
     }
 

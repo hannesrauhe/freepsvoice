@@ -12,6 +12,14 @@ val keystoreProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 
+// Releases are tagged vX.Y.Z; CI passes the tag as RELEASE_TAG and the version
+// is derived from it. Local/debug builds fall back to these values.
+val releaseTag = System.getenv("RELEASE_TAG") ?: ""
+val tagVersion = Regex("""v(\d+)\.(\d+)\.(\d+)""").matchEntire(releaseTag)
+    ?.destructured?.let { (maj, min, patch) ->
+        Triple(maj.toInt(), min.toInt(), patch.toInt())
+    }
+
 android {
     namespace = "eu.rauhe.freepsvoice"
     compileSdk = 35
@@ -20,8 +28,8 @@ android {
         applicationId = "eu.rauhe.freepsvoice"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.1.1"
+        versionName = tagVersion?.let { "${it.first}.${it.second}.${it.third}" } ?: "0.1.1-dev"
+        versionCode = tagVersion?.let { (maj, min, patch) -> maj * 10000 + min * 100 + patch } ?: 2
     }
 
     buildFeatures {

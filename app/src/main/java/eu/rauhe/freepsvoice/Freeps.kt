@@ -35,4 +35,15 @@ class Freeps(private val baseUrl: String) {
             .post(ByteArray(0).toRequestBody(null)).build()
         http.newCall(req).execute().use { return it.isSuccessful }
     }
+
+    /** The Mistral key kept in the freeps config ([mistral] section). */
+    fun getMistralKey(): String {
+        val url = "$baseUrl/config/GetKey?SectionName=mistral&Key=APIKey"
+        val req = Request.Builder().url(url).get().build()
+        http.newCall(req).execute().use { res ->
+            val text = res.body?.string() ?: ""
+            if (!res.isSuccessful) error("GetKey HTTP ${res.code}")
+            return text.trim()
+        }
+    }
 }

@@ -2,11 +2,11 @@ package eu.rauhe.freepsvoice
 
 import org.json.JSONObject
 
-/** LLM flow picker — system prompt and rules ported verbatim from the Python app. */
+/** LLM flow picker — system prompt and rules ported from the Python app. */
 object FlowPicker {
     // trimMargin() is a call, so this cannot be a const val.
     private val SYSTEM = """
-        |Du bist die Sprachsteuerung eines Smart-Home-Roboters.
+        |Du bist die Sprachsteuerung eines Smart Homes.
         |Der Nutzer hat ein Kommando gesprochen (transkribiert, kann Fehler enthalten).
         |Wähle GENAU EINEN Flow aus der angegebenen Liste, der das Kommando ausführt.
         |Regeln:

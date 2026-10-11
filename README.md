@@ -186,7 +186,11 @@ signs locally. Not needed for debug sideloads.
 
 Tag builds are signed in CI: push a `v*` tag and the workflow restores the
 keystore from repo **secrets** and publishes signed `freepsvoice-{wall,phone}-<tag>.apk`
-as release assets. Set these once under Settings → Secrets and variables → Actions:
+as release assets. The tag *is* the version — CI passes it as `RELEASE_TAG` and
+`app/build.gradle.kts` derives `versionName` (`v0.1.2` → `0.1.2`) and
+`versionCode` (`0*10000 + 1*100 + 2` = 102) from it, so a release is just a tag.
+Local builds without the tag stay at `versionCode 2` / `0.1.1-dev`.
+Set these once under Settings → Secrets and variables → Actions:
 
 | Secret | Value |
 |---|---|
@@ -215,19 +219,16 @@ mismatch) — `adb uninstall` first.
 2. **Cleartext allowed globally** (`network_security_config.xml`) because the
    freeps host is user-configurable HTTP. Narrow to the configured LAN host
    once settings exist, or require HTTPS.
-3. **Tap-to-start/tap-to-stop** — hold-to-talk (press & release) is nicer and
-   matches the original robot UX.
-4. **Flow catalogue is fetched on every turn** — cache it, refresh on open /
-   pull-to-refresh / settings change.
-5. **Release signing** — config + `tools/make-keystore.sh` exist; run the script
-   once the app is feature-complete (see *Release signing*).
-6. **Speech output** — would need cloud TTS (`POST /v1/audio/speech`,
+3. **Speech output** — would need cloud TTS (`POST /v1/audio/speech`,
    `voxtral-mini-tts-2603`), which needs no framework TTS and therefore works
    on this device. Costs money per reply and needs internet. Not wired up.
-7. **Wall mode** — done, see *Wall mode (kiosk)*. Watch: `setKeyguardDisabled`
-   and lock-task behaviour on this LineageOS build after long uptimes.
-8. **Error UX** — failures are one status line; no dialogs, no retry buttons.
-9. The system prompt still says "Smart-Home-Roboters" (kept verbatim from
-   the original robot app for behavioral parity) — reword freely.
-10. Original reference implementation was Python (push-to-talk on a robot
-    antenna); this app is fully standalone and needs nothing from it.
+4. **Error UX** — failures are one status line; no dialogs, no retry buttons.
+5. **Translations** — the whole UI is hard-coded German (`strings.xml` is
+   barely used). Move strings into resources and add an English locale. The
+   LLM replies are German too — the `FlowPicker` system prompt would need a
+   language parameter.
+6. **Assistant role** — register the phone flavor as a default assistant app
+   (`ASSISTANT` intent + `BIND_VOICE_INTERACTION`), so holding the home button
+   opens freepsvoice instead of Gemini. Needs a general Q&A path too (no flow
+   fits → answer as assistant instead of refusing), and later multi-turn chat
+   history.

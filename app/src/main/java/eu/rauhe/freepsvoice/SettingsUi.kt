@@ -8,6 +8,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -72,6 +74,12 @@ fun SettingsScreen(vm: AppViewModel, onDismiss: () -> Unit, onEditSensors: () ->
                 title = { Text("Einstellungen") },
                 navigationIcon = { BackButton(onDismiss) },
                 actions = {
+                    IconButton(onClick = {
+                        vm.testConnection(key, freeps, mistralBase, dry)
+                    }) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = "Verbindung testen",
+                            modifier = Modifier.size(32.dp))
+                    }
                     IconButton(onClick = ::save) {
                         Icon(Icons.Default.Check, contentDescription = "Speichern",
                             modifier = Modifier.size(32.dp))
@@ -89,10 +97,17 @@ fun SettingsScreen(vm: AppViewModel, onDismiss: () -> Unit, onEditSensors: () ->
                 value = key, onValueChange = { key = it },
                 label = { Text("Mistral API-Key") }, singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { vm.fetchKey(freeps, mistralBase, dry) { key = it } }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Key von freeps holen")
+                    }
+                },
+                supportingText = { if (vm.mistralStatus.isNotEmpty()) Text(vm.mistralStatus) },
             )
             OutlinedTextField(
                 value = freeps, onValueChange = { freeps = it },
                 label = { Text("freeps URL") }, singleLine = true,
+                supportingText = { if (vm.freepsStatus.isNotEmpty()) Text(vm.freepsStatus) },
             )
 
             Row(
@@ -192,14 +207,6 @@ fun SettingsScreen(vm: AppViewModel, onDismiss: () -> Unit, onEditSensors: () ->
                         Switch(checked = proximity, onCheckedChange = { proximity = it })
                     }
                 }
-            }
-
-            HorizontalDivider()
-            OutlinedButton(onClick = {
-                vm.testConnection(key, freeps, mistralBase, dry)
-            }) { Text("Verbindung testen") }
-            if (vm.testResult.isNotEmpty()) {
-                Text(vm.testResult, style = MaterialTheme.typography.bodyMedium)
             }
         }
     }

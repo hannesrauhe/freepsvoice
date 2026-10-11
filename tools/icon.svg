@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher icon source: white mic on the themed background.
+     Rasterize for the mipmap PNGs (fdroidserver cannot read the adaptive XML):
+       convert -background none -density 300 tools/icon.svg -resize 192x192 ... -->
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
+  <rect width="108" height="108" fill="#2D6A4F"/>
+  <path fill="#FFFFFF" d="M54,30 a8,8 0 0 1 8,8 v16 a8,8 0 0 1 -16,0 v-16 a8,8 0 0 1 8,-8 z"/>
+  <path fill="#FFFFFF" d="M40,52 a14,14 0 0 0 28,0 h4 a18,18 0 0 1 -16,17.9 V78 h-8 v-8.1 A18,18 0 0 1 36,52 z"/>
+</svg>

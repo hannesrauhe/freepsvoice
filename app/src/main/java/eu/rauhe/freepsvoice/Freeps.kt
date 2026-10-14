@@ -1,5 +1,6 @@
 package eu.rauhe.freepsvoice
 
+import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -44,6 +45,19 @@ class Freeps(private val baseUrl: String) {
             val text = res.body?.string() ?: ""
             if (!res.isSuccessful) error("GetKey HTTP ${res.code}")
             return text.trim()
+        }
+    }
+
+    /** Stores the Mistral key in the freeps config ([mistral] section). */
+    fun setMistralKey(key: String) {
+        val body = FormBody.Builder()
+            .add("SectionName", "mistral")
+            .add("Key", "APIKey")
+            .add("Value", key)
+            .build()
+        val req = Request.Builder().url("$baseUrl/config/SetKey").post(body).build()
+        http.newCall(req).execute().use { res ->
+            if (!res.isSuccessful) error("SetKey HTTP ${res.code}")
         }
     }
 }

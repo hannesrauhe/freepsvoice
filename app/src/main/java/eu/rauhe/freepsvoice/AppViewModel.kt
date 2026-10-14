@@ -203,6 +203,50 @@ class AppViewModel(app: android.app.Application) : AndroidViewModel(app) {
         }
     }
 
+    /**
+     * Pushes the key from the settings field to the freeps config, so the other
+     * devices can fetch it. The key is checked against Mistral first, unless the
+     * dry run skips it — a broken key should not overwrite a working server key.
+     */
+    fun pushKey(key: String, freepsUrl: String, mistralBase: String, dry: Boolean) {
+        if (key.isBlank()) {
+            mistralStatus = "kein Key"
+            return
+        }
+        if (dry) {
+            pushToFreeps(key, freepsUrl, validated = false)
+            return
+        }
+        mistralStatus = "Prüfe Key…"
+        viewModelScope.launch(Dispatchers.IO) {
+            val valid = runCatching {
+                Mistral(key.trim(), mistralBase.trim().trimEnd('/')).listModels().size
+            }
+            withContext(Dispatchers.Main) {
+                valid.fold(
+                    onSuccess = {
+                        mistralStatus = "OK: ${it} Modelle"
+                        pushToFreeps(key, freepsUrl, validated = true)
+                    },
+                    onFailure = { mistralStatus = "Key ungültig: ${it.message ?: "Fehler"}" },
+                )
+            }
+        }
+    }
+
+    private fun pushToFreeps(key: String, freepsUrl: String, validated: Boolean) {
+        freepsStatus = "Speichere Key…"
+        viewModelScope.launch(Dispatchers.IO) {
+            val res = runCatching { Freeps(freepsUrl.trim().trimEnd('/')).setMistralKey(key.trim()) }
+            withContext(Dispatchers.Main) {
+                freepsStatus = res.fold(
+                    onSuccess = { if (validated) "Key gespeichert." else "Key gespeichert (ungeprüft)." },
+                    onFailure = { "freeps: ${it.message ?: "Fehler"}" },
+                )
+            }
+        }
+    }
+
     fun startRecording() {
         if (busy) return
         runCatching { recorder.start() }

@@ -8,8 +8,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -98,8 +100,16 @@ fun SettingsScreen(vm: AppViewModel, onDismiss: () -> Unit, onEditSensors: () ->
                 label = { Text("Mistral API-Key") }, singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 trailingIcon = {
-                    IconButton(onClick = { vm.fetchKey(freeps, mistralBase, dry) { key = it } }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Key von freeps holen")
+                    Row {
+                        IconButton(onClick = { key = "" }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Key löschen")
+                        }
+                        IconButton(onClick = { vm.fetchKey(freeps, mistralBase, dry) { key = it } }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Key von freeps holen")
+                        }
+                        IconButton(onClick = { vm.pushKey(key, freeps, mistralBase, dry) }) {
+                            Icon(Icons.Default.Send, contentDescription = "Key zu freeps übertragen")
+                        }
                     }
                 },
                 supportingText = { if (vm.mistralStatus.isNotEmpty()) Text(vm.mistralStatus) },

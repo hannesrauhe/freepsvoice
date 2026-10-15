@@ -1,6 +1,7 @@
 package eu.rauhe.freepsvoice
 
 import okhttp3.FormBody
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -58,6 +59,22 @@ class Freeps(private val baseUrl: String) {
         val req = Request.Builder().url("$baseUrl/config/SetKey").post(body).build()
         http.newCall(req).execute().use { res ->
             if (!res.isSuccessful) error("SetKey HTTP ${res.code}")
+        }
+    }
+
+    /**
+     * One POST registers the device and writes all properties (freeps: write = register).
+     * JSON body: form fields end up as arrays on older servers; JSON keeps scalars and types.
+     */
+    fun sendDeviceMetrics(category: String, name: String, props: Map<String, Any>) {
+        val body = JSONObject(props).toString()
+            .toRequestBody("application/json; charset=utf-8".toMediaType())
+        val url = "$baseUrl/sensor/SetSensorProperties?SensorCategory=" +
+            java.net.URLEncoder.encode(category, "UTF-8") +
+            "&SensorName=" + java.net.URLEncoder.encode(name, "UTF-8")
+        val req = Request.Builder().url(url).post(body).build()
+        http.newCall(req).execute().use { res ->
+            if (!res.isSuccessful) error("SetSensorProperties HTTP ${res.code}")
         }
     }
 }

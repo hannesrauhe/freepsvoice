@@ -32,6 +32,7 @@ class KioskReceiver : BroadcastReceiver() {
             Kiosk.SLEEP_ACTION -> Kiosk.dpm(context)?.lockNow()
             Intent.ACTION_BOOT_COMPLETED -> if (Settings(context).kioskEnabled) {
                 Kiosk.wakeNow(context)
+                Metrics.arm(context)
             }
         }
         // One-shot alarms: re-arm both for the next day after every firing.

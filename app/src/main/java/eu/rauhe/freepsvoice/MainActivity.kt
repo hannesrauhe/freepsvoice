@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -43,9 +44,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 class MainActivity : ComponentActivity() {
     private val proximity by lazy { ProximityWake(this) }
     private val vm: AppViewModel by viewModels()
+    private var lastMetrics = 0L
     private val poll = object : Runnable {
         override fun run() {
             vm.refreshAlerts()
+            // While resumed, this loop is the heartbeat; wall mode adds the alarm for screen-off.
+            if (SystemClock.elapsedRealtime() - lastMetrics > METRICS_MS) {
+                lastMetrics = SystemClock.elapsedRealtime()
+                Thread { Metrics.tick(this@MainActivity, Settings(this@MainActivity)) }.start()
+            }
             window.decorView.postDelayed(this, POLL_MS)
         }
     }
@@ -84,6 +91,9 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         AlertWatch.cancel(this)
+        if (wallMode) Metrics.cancel(this)
+        lastMetrics = SystemClock.elapsedRealtime()
+        Thread { Metrics.tick(this, Settings(this)) }.start()
         window.decorView.post(poll)
     }
 
@@ -91,6 +101,7 @@ class MainActivity : ComponentActivity() {
         super.onPause()
         window.decorView.removeCallbacks(poll)
         if (Settings(this).kioskEnabled) AlertWatch.arm(this)
+        if (wallMode) Metrics.arm(this)
     }
 
     /** Must stay registered while paused: the screen-off pause may not disarm the wake. */
@@ -104,10 +115,12 @@ class MainActivity : ComponentActivity() {
     override fun onUserInteraction() {
         super.onUserInteraction()
         proximity.userActive()
+        Settings(this).lastTouchMs = System.currentTimeMillis()
     }
 
     companion object {
         private const val POLL_MS = 60_000L
+        private const val METRICS_MS = 5 * 60_000L
     }
 }
 

@@ -48,5 +48,9 @@
         <receiver
             android:name=".AlertReceiver"
             android:exported="false" />
+
+        <receiver
+            android:name=".MetricsReceiver"
+            android:exported="false" />
     </application>
 </manifest>

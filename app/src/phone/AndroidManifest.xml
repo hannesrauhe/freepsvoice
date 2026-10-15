@@ -17,5 +17,6 @@
         <receiver android:name=".KioskAdmin" tools:node="remove" />
         <receiver android:name=".KioskReceiver" tools:node="remove" />
         <receiver android:name=".AlertReceiver" tools:node="remove" />
+        <receiver android:name=".MetricsReceiver" tools:node="remove" />
     </application>
 </manifest>

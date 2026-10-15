@@ -37,6 +37,7 @@ fun SettingsScreen(vm: AppViewModel, onDismiss: () -> Unit, onEditSensors: () ->
     var kioskOn by remember { mutableStateOf(s.kioskOnTime) }
     var kioskOff by remember { mutableStateOf(s.kioskOffTime) }
     var proximity by remember { mutableStateOf(s.kioskProximity) }
+    var deviceName by remember { mutableStateOf(s.deviceName) }
     val isOwner = Kiosk.isOwner(context)
     val keyguardSecure = remember {
         (context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager).isKeyguardSecure
@@ -52,6 +53,7 @@ fun SettingsScreen(vm: AppViewModel, onDismiss: () -> Unit, onEditSensors: () ->
         s.mistralBase = mistralBase
         s.llmBase = llmBase
         s.dryRun = dry
+        s.deviceName = deviceName
         if (wallMode) {
             s.kioskEnabled = kiosk
             s.kioskOnTime = kioskOn
@@ -161,6 +163,11 @@ fun SettingsScreen(vm: AppViewModel, onDismiss: () -> Unit, onEditSensors: () ->
             }
 
             HorizontalDivider()
+            OutlinedTextField(
+                value = deviceName, onValueChange = { deviceName = it },
+                label = { Text("Gerätename") }, singleLine = true,
+                supportingText = { Text("freeps-Key: " + Metrics.deviceId(context)) },
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

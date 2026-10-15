@@ -64,6 +64,16 @@ class Settings(context: Context) {
         get() = (prefs.getString("sensor_props", "") ?: "").split("\n").filter { it.isNotBlank() }
         set(v) = put("sensor_props", v.joinToString("\n"))
 
+    /** Display name for freeps; blank = model name. The sensor key is derived from it. */
+    var deviceName: String
+        get() = get("device_name", "")
+        set(v) = put("device_name", v.trim())
+
+    /** Epoch ms of the last touch, reported as lastTouch in wall mode. */
+    var lastTouchMs: Long
+        get() = prefs.getLong("last_touch_ms", 0)
+        set(v) = prefs.edit().putLong("last_touch_ms", v).apply()
+
     companion object {
         const val DEFAULT_FREEPS = "http://raspi.fritz.box:8080"
         const val MISTRAL_BASE = "https://api.mistral.ai/v1"

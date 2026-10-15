@@ -63,6 +63,9 @@ object AlertWatch {
 
     /** Fetch directly, without the ViewModel: a receiver has no lifecycle. */
     fun check(context: Context, settings: Settings) {
+        // Night blackout wins: waking here would leave the panel stuck awake, because the
+        // idle timer only arms on a screen-on transition and that one needs the window too.
+        if (!Kiosk.inWindow(context)) return
         val waking = fetchWake(settings.freepsUrl) ?: return
         if (waking.isEmpty()) return
         Log.i("AlertWatch", "${waking.size} Meldungen (sev ≤ 3) aktiv — Bildschirm an")
